@@ -11,6 +11,6 @@ class BotController extends Controller
     //
 
     public function index(Request $request){
-       Log::debug($request->getContent().PHP_EOL);
+       Log::debug(json_encode($request->all()).PHP_EOL);
     }
 }
