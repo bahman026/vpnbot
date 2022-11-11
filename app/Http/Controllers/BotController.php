@@ -18,6 +18,7 @@ class BotController extends Controller
         $request->validate([
             'update_id' => 'required|int',
         ]);
+
         Log::debug(Telegram::getCommand($request));
     }
 }
