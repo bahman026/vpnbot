@@ -12,7 +12,6 @@ class Telegram
         $body = $request->all();
         $message = $body['message'];
         $text = $message['text'];
-        Log::debug($text);
         $entities = $message['entities'] ?? null;
         if ($entities && $entities[0]['type'] == "bot_command")
             return $text;
@@ -26,13 +25,62 @@ class Telegram
         return $message['text'];
     }
 
-    static function sendMessage($request, $text): mixed
+    static function getColumn($request)
+    {
+        $key = self::getText($request);
+
+        $db = new \SQLite3(env("SQLITE_PATH"));
+
+        $results = $db->query("select *
+        from inbounds
+        WHERE
+        settings like '%$key%'")->fetchArray();
+
+        $text = false;
+        if (!isset($results['id']) || !$results['id']) {
+            $results = $db->query("select *
+        from inbounds
+        WHERE
+        remark = '$key'")->fetchArray();
+        }
+
+        if (!isset($results['id']) || !$results['id'])
+            return false;
+
+        $up = round(($results['up']) / 1024 / 1024 / 1024, 2);
+        $down = round(($results['down']) / 1024 / 1024 / 1024, 2);
+        $total = round(($results['total']) / 1024 / 1024 / 1024, 2);
+        $expiryTime = $results['expiry_time'];
+        $text .= "حجم آپلود = " . $up . " GB " . PHP_EOL
+            . "حجم دانلود = " . $down . " GB " . PHP_EOL;
+        if ($total == 0)
+            $text .= "حجم نامحدود" . PHP_EOL;
+        else
+            $text .= "حجم = " . $total . " GB " . PHP_EOL;
+        if (!$expiryTime)
+            $text .= "مدت زمان نامحدود" . PHP_EOL;
+        else {
+            $expiryTime = floor($expiryTime / 1000);
+            $now = time();
+            $datediff = $expiryTime - $now;
+            if ($datediff <= 0)
+                $text .= "سرویس منقضی شده است" . PHP_EOL;
+            else {
+                $text .= "روز های باقی مانده تا اتمام سرویس = " . round($datediff / (60 * 60 * 24)) . PHP_EOL;
+            }
+        }
+
+        return $text;
+//        var_dump($text);
+    }
+
+    static function sendMessage($request, $text): bool|string
     {
         $body = $request->all();
         $message = $body['message'];
         $chat = $message['chat'];
         $chatId = $chat['id'];
-        $url = env("TELEGRAM_BASE") . "sendMessage";
+        $url = env("TELEGRAM_BASE") . "/sendMessage";
         $params = ['chat_id' => $chatId, 'text' => $text];
         return self::send_replay($url, $params);
     }
