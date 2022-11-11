@@ -2,7 +2,11 @@
 
 namespace App\Helper;
 
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Console\Input\Input;
 
 class Telegram
 {
@@ -37,7 +41,6 @@ class Telegram
         WHERE
         settings like '%$key%'")->fetchArray();
 
-        $text = false;
         if (!isset($results['id']) || !$results['id']) {
             $results = $db->query("select *
         from inbounds
@@ -48,10 +51,17 @@ class Telegram
         if (!isset($results['id']) || !$results['id'])
             return false;
 
-        $up = round(($results['up']) / 1024 / 1024 / 1024, 2);
-        $down = round(($results['down']) / 1024 / 1024 / 1024, 2);
-        $total = round(($results['total']) / 1024 / 1024 / 1024, 2);
-        $expiryTime = $results['expiry_time'];
+        return self::getColumnInfo($results);
+    }
+
+    static private function getColumnInfo($column)
+    {
+        $text = false;
+        $up = round(($column['up']) / 1024 / 1024 / 1024, 2);
+        $enable = (bool)$column['enable'];
+        $down = round(($column['down']) / 1024 / 1024 / 1024, 2);
+        $total = round(($column['total']) / 1024 / 1024 / 1024, 2);
+        $expiryTime = $column['expiry_time'];
         $text .= "حجم آپلود = " . $up . " GB " . PHP_EOL
             . "حجم دانلود = " . $down . " GB " . PHP_EOL;
         if ($total == 0)
@@ -71,8 +81,19 @@ class Telegram
             }
         }
 
+        if ($enable)
+            $text .= "سرویس فعال می باشد." . PHP_EOL;
+        else
+            $text .= "سرویس غیر فعال می باشد." . PHP_EOL;
+
+        $text .= "
+🔹برای پشتیبانی لطفا به آیدی های زیر پیام دهید.
+@vpnxzn
+آیدی کانال :
+ @vpn2vray";
+
         return $text;
-//        var_dump($text);
+
     }
 
     static function sendMessage($request, $text): bool|string
@@ -82,19 +103,57 @@ class Telegram
         $chat = $message['chat'];
         $chatId = $chat['id'];
         $url = env("TELEGRAM_BASE") . "/sendMessage";
-        $params = ['chat_id' => $chatId, 'text' => $text];
+        $params = [
+            'multipart' => [
+                [
+                    'name' => 'chat_id',
+                    'contents' => $chatId,
+                ],
+                [
+                    'name' => 'text',
+                    'contents' => $text,
+                ]
+            ]
+        ];
         return self::send_replay($url, $params);
     }
 
-    static private function send_replay($url, $postParam): bool|string
+    static function sendImage($request, $image, $description = '')
     {
-        $cu = curl_init();
-        curl_setopt($cu, CURLOPT_URL, $url);
-        curl_setopt($cu, CURLOPT_POSTFIELDS, $postParam);
-        curl_setopt($cu, CURLOPT_RETURNTRANSFER, true);
-        $result = curl_exec($cu);
-        curl_close($cu);
-        return $result;
+        $body = $request->all();
+        $message = $body['message'];
+        $chat = $message['chat'];
+        $chatId = $chat['id'];
+        $url = env("TELEGRAM_BASE") . "/sendPhoto";
+        $params = [
+            'multipart' => [
+                [
+                    'name' => 'chat_id',
+                    'contents' => $chatId,
+                ],
+                [
+                    'name' => 'photo',
+                    'contents' => $image,
+                    'filename' => 'image.png'
+                ],
+                [
+                    'name' => 'description',
+                    'contents' => $description,
+                ]
+            ]
+        ];
+        return self::send_replay($url, $params);
+    }
+
+    static private function send_replay($url, $postParam)
+    {
+        try {
+            $client = new Client();
+            return $client->post($url, $postParam);
+        } catch (\Exception $exception) {
+            return false;
+        }
+
     }
 
 
