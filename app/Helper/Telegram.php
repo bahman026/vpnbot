@@ -29,6 +29,7 @@ class Telegram
     {
         $key = self::getText($request);
 
+
         $db = new \SQLite3(env("SQLITE_PATH"));
 
         $results = $db->query("select *

@@ -34,7 +34,7 @@ class BotController extends Controller
         }
 
         $result = Telegram::getColumn($request);
-        if (!$request) {
+        if (!$result) {
             $text = `🔺اطلاعاتی یافت نشد!
 🔹برای پشتیبانی لطفا به آیدی های زیر پیام دهید.
 @vpnxzn
