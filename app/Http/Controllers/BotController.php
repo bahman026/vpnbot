@@ -22,12 +22,13 @@ class BotController extends Controller
             'update_id' => 'required|int',
         ]);
 
+        Log::info(json_encode($request->all()));
         $result = (Telegram::getCommand($request));
         if ($result == "/start" || $result == "/help") {
             $text = "🔺برای اطلاع از وضعیت سرویس خود لطفا نام اتصال و یا id اتصال خود را ارسال کنید
 
 🔹برای پشتیبانی لطفا به آیدی های زیر پیام دهید.
-@vpnxzn
+@vpnxzn @vpn_fm_admin
 آیدی کانال :
  @vpn2vray";
 
@@ -39,7 +40,7 @@ class BotController extends Controller
         if (!$result) {
             $text = "🔺اطلاعاتی یافت نشد!
 🔹برای پشتیبانی لطفا به آیدی های زیر پیام دهید.
-@vpnxzn
+@vpnxzn @vpn_fm_admin
 
 آیدی کانال :
  @vpn2vray";
