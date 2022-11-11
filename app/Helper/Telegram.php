@@ -96,7 +96,7 @@ class Telegram
 
     }
 
-    static function sendMessage($request, $text): bool|string
+    static function sendMessage($request, $text)
     {
         $body = $request->all();
         $message = $body['message'];
