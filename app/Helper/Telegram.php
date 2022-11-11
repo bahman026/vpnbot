@@ -82,9 +82,9 @@ class Telegram
         }
 
         if ($enable)
-            $text .= "سرویس فعال می باشد." . PHP_EOL;
+            $text .= "🔹سرویس فعال می باشد." . PHP_EOL;
         else
-            $text .= "سرویس غیر فعال می باشد." . PHP_EOL;
+            $text .= "🔺سرویس غیر فعال می باشد." . PHP_EOL;
 
         $text .= "
 🔹برای پشتیبانی لطفا به آیدی های زیر پیام دهید.
@@ -137,7 +137,7 @@ class Telegram
                     'filename' => 'image.png'
                 ],
                 [
-                    'name' => 'description',
+                    'name' => 'caption',
                     'contents' => $description,
                 ]
             ]
@@ -149,7 +149,8 @@ class Telegram
     {
         try {
             $client = new Client();
-            return $client->post($url, $postParam);
+            $client->post($url, $postParam);
+            return true;
         } catch (\Exception $exception) {
             return false;
         }
