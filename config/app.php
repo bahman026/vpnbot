@@ -209,7 +209,8 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
-        // 'ExampleClass' => App\Example\ExampleClass::class,
+//         'Telegram' => App\Helper\Telegram::class,
+
     ])->toArray(),
 
 ];
